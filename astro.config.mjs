@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://YOUR_USERNAME.github.io', // Replace with your GitHub username
+  site: 'https://YMuehlhaeuser.github.io', // Replace with your GitHub username
   integrations: [mdx(), sitemap()],
   output: 'static',
 });

@@ -1,0 +1,47 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PhotoGallery from '../../components/PhotoGallery.astro';
+
+export function getStaticPaths() {
+  const allImages = import.meta.glob<{ default: ImageMetadata }>(
+    '/src/assets/photos/**/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}',
+    { eager: true }
+  );
+  const albums = new Set(Object.keys(allImages).map(p => p.split('/').at(-2)!));
+  return [...albums].map(album => ({ params: { album } }));
+}
+
+const { album } = Astro.params;
+const title = album.charAt(0).toUpperCase() + album.slice(1);
+---
+
+<BaseLayout title={`${title} — Photos`} description={`${title} photography`}>
+  <nav class="breadcrumb">
+    <a href="/photos">Photos</a>
+    <span>/</span>
+    <span>{title}</span>
+  </nav>
+
+  <h1>{title}</h1>
+  <PhotoGallery album={album} />
+</BaseLayout>
+
+<style>
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .breadcrumb a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover { text-decoration: underline; }
+
+  h1 { margin-top: 0; }
+</style>

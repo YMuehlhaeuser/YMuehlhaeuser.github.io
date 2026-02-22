@@ -1,48 +1,84 @@
 ---
-import { getCollection } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
 
-const allPhotos = await getCollection('photos');
+interface Props {
+  album?: string;
+}
 
-// Sort by date descending
-const photos = allPhotos.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const { album } = Astro.props;
 
-// Pre-process images to get dimensions for PhotoSwipe
-const processedPhotos = await Promise.all(
-  photos.map(async (photo) => {
-    const optimized = await getImage({ src: photo.data.src, format: 'webp' });
-    return {
-      ...photo,
-      optimizedSrc: optimized.src,
-      width: optimized.attributes.width,
-      height: optimized.attributes.height,
-    };
+// Auto-discover all photos from album subfolders
+const allImages = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/photos/**/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}',
+  { eager: true }
+);
+
+// Optional sidecar metadata: src/content/photos/album/filename.md
+// frontmatter: title, alt, description (all optional)
+const sidecars = import.meta.glob<{ frontmatter: Record<string, string> }>(
+  '/src/content/photos/**/*.md',
+  { eager: true }
+);
+
+// Build a lookup: "landscape/DSC00122.jpg" → frontmatter
+const meta: Record<string, Record<string, string>> = {};
+for (const [path, mod] of Object.entries(sidecars)) {
+  // path like /src/content/photos/landscape/DSC00122.md
+  const parts = path.split('/');
+  const albumFolder = parts.at(-2)!;
+  const base = parts.at(-1)!.replace(/\.mdx?$/, '');
+  meta[`${albumFolder}/${base}`] = mod.frontmatter ?? {};
+}
+
+// Filter by album
+const filtered = Object.entries(allImages).filter(([path]) => {
+  if (!album) return true;
+  const folder = path.split('/').at(-2)!;
+  return folder.toLowerCase() === album.toLowerCase();
+});
+
+// Build photo objects with optional sidecar metadata
+const photos = await Promise.all(
+  filtered.map(async ([path, mod]) => {
+    const parts = path.split('/');
+    const filename = parts.at(-1)!;
+    const albumFolder = parts.at(-2)!;
+    const base = filename.replace(/\.[^.]+$/, '');
+    const sidecar = meta[`${albumFolder}/${base}`] ?? {};
+
+    const title = sidecar.title ?? base.replace(/[-_]/g, ' ');
+    const alt = sidecar.alt ?? title;
+
+    const fullRes = await getImage({ src: mod.default, format: 'webp', quality: 90 });
+    return { image: mod.default, title, alt, fullRes };
   })
 );
 ---
 
-{processedPhotos.length === 0 ? (
-  <p class="empty">No photos yet. Add some to <code>src/content/photos/</code>!</p>
+{photos.length === 0 ? (
+  <p class="empty">
+    No photos yet. Drop images into <code>src/assets/photos/{album ?? 'album-name'}/</code>.
+  </p>
 ) : (
   <div class="gallery" id="gallery">
-    {processedPhotos.map((photo) => (
+    {photos.map((photo) => (
       <a
-        href={photo.optimizedSrc}
-        data-pswp-width={photo.width}
-        data-pswp-height={photo.height}
+        href={photo.fullRes.src}
+        data-pswp-width={photo.fullRes.attributes.width}
+        data-pswp-height={photo.fullRes.attributes.height}
         target="_blank"
         rel="noreferrer"
         class="gallery-item"
-        title={photo.data.title}
+        title={photo.title}
       >
         <Image
-          src={photo.data.src}
-          alt={photo.data.alt}
+          src={photo.image}
+          alt={photo.alt}
           width={600}
-          quality={80}
+          quality={75}
           format="webp"
         />
-        <span class="caption">{photo.data.title}</span>
+        <span class="caption">{photo.title}</span>
       </a>
     ))}
   </div>
@@ -68,15 +104,11 @@ const processedPhotos = await Promise.all(
   }
 
   @media (max-width: 768px) {
-    .gallery {
-      columns: 2;
-    }
+    .gallery { columns: 2; }
   }
 
   @media (max-width: 480px) {
-    .gallery {
-      columns: 1;
-    }
+    .gallery { columns: 1; }
   }
 
   .gallery-item {

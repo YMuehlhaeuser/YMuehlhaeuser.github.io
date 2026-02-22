@@ -1,0 +1,105 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout title="Blog" description="Thoughts on tech, life, and everything in between">
+  <h1>Blog</h1>
+
+  {posts.length === 0 ? (
+    <p class="empty">No posts yet. Add some to <code>src/content/blog/</code>!</p>
+  ) : (
+    <ul class="post-list">
+      {posts.map(post => (
+        <li>
+          <a href={`/blog/${post.id.replace(/\.(md|mdx)$/, '')}`} class="post-item">
+            <div class="post-meta">
+              <time datetime={post.data.pubDate.toISOString()}>
+                {post.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </time>
+              {post.data.tags && post.data.tags.length > 0 && (
+                <ul class="tags">
+                  {post.data.tags.map(tag => <li class="tag">{tag}</li>)}
+                </ul>
+              )}
+            </div>
+            <h2>{post.data.title}</h2>
+            <p>{post.data.description}</p>
+          </a>
+        </li>
+      ))}
+    </ul>
+  )}
+</BaseLayout>
+
+<style>
+  h1 {
+    margin-top: 0;
+  }
+
+  .post-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .post-item {
+    display: block;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .post-item:hover h2 {
+    color: var(--accent);
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.4rem;
+  }
+
+  time {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .tags {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .tag {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  h2 {
+    margin: 0 0 0.4rem;
+    font-size: 1.2rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .empty {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+</style>

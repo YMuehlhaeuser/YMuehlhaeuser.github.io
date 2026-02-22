@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="About" description="Learn more about me">
+  <h1>About Me</h1>
+  <div class="prose">
+    <p>
+      Hi! I'm <strong>Your Name</strong>, a software developer based somewhere on this planet.
+      I'm passionate about building things, taking photos, and writing.
+    </p>
+
+    <h2>Work</h2>
+    <p>
+      I work on [your current role/projects]. Previously, I've worked on
+      [previous experience]. I enjoy [technologies/domains you like].
+    </p>
+
+    <h2>Outside of code</h2>
+    <p>
+      When I'm not at a computer, you'll find me with a camera, exploring new places,
+      or [other hobbies].
+    </p>
+
+    <h2>Get in touch</h2>
+    <ul>
+      <li><a href="https://github.com/YOUR_USERNAME" target="_blank" rel="noopener">GitHub</a></li>
+      <li><a href="https://twitter.com/YOUR_USERNAME" target="_blank" rel="noopener">Twitter / X</a></li>
+      <li><a href="mailto:your@email.com">Email</a></li>
+    </ul>
+  </div>
+</BaseLayout>
+
+<style>
+  h1 {
+    margin-top: 0;
+  }
+
+  .prose {
+    max-width: 680px;
+  }
+
+  .prose h2 {
+    margin-top: 2rem;
+  }
+
+  .prose p {
+    color: var(--text);
+    line-height: 1.75;
+  }
+
+  .prose ul {
+    padding-left: 1.5rem;
+  }
+
+  .prose li {
+    margin-bottom: 0.4rem;
+  }
+</style>
